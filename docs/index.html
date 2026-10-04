@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Refresh Queue: Ranking Content Pages by Refresh Opportunity</title>
+<style>
+  body { font-family: Georgia, 'Times New Roman', serif; line-height: 1.65; color: #1a1a1a;
+         max-width: 760px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  h1 { font-size: 1.9rem; line-height: 1.3; margin-bottom: 0.25rem; }
+  h2 { font-size: 1.35rem; margin-top: 2.2rem; border-bottom: 1px solid #ddd; padding-bottom: 0.3rem; }
+  .byline { color: #555; margin-bottom: 1.5rem; }
+  .abstract { background: #f7f7f7; border-left: 4px solid #2c7a2c; padding: 1rem 1.25rem; margin: 1.5rem 0; }
+  table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; font-size: 0.92rem; }
+  th, td { border: 1px solid #ccc; padding: 0.45rem 0.6rem; text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  th { background: #f0f0f0; }
+  tr.winner td { background: #eaf5ea; font-weight: bold; }
+  figure { margin: 1.5rem 0; text-align: center; }
+  figure img { max-width: 100%; height: auto; border: 1px solid #ddd; }
+  figcaption { font-size: 0.9rem; color: #555; margin-top: 0.4rem; }
+  code { background: #f2f2f2; padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.9em; }
+  .rec { background: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 0.8rem 1rem; margin: 0.6rem 0; }
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #ddd; color: #555; font-size: 0.92rem; }
+</style>
+</head>
+<body>
+
+<h1>Refresh Queue: Ranking Content Pages by Refresh Opportunity with an Honest Baseline and a Learned Model</h1>
+<p class="byline">Muhammad Nasir &middot; FlyRank ML Internship Capstone &middot; October 2026</p>
+
+<div class="abstract">
+<strong>Abstract.</strong>
+(1) Content teams can only refresh a limited number of pages per cycle, so the order of the refresh queue decides how much declining search visibility gets recovered.
+(2) We rank 30,000 anonymized content pages by refresh opportunity, comparing a transparent rule-based baseline against three learned classifiers on the same client-holdout split.
+(3) A random forest reaches precision@20 of 0.85 and ROC AUC of 0.75 on held-out clients, clearly beating the baseline (precision@20 of 0.10) and a readable depth-5 decision tree.
+(4) Error analysis shows the model is most uncertain on thin pages with almost no impressions and on climbing pages the proxy label ignores.
+(5) The honest reading: this is a prioritization baseline for human review, not a causal claim that refreshing causes recovery — the queue says where to look first.
+</div>
+
+<h2>1. Introduction &amp; Problem Statement</h2>
+<p>Search visibility decays. Pages that once ranked slip as content goes stale, competitors publish, and intent shifts. Refreshing a page — updating facts, examples, titles, and publish dates — is one of the cheapest levers a content team has, but refresh capacity is finite. The operational question is a ranking question: <em>which pages should we refresh first?</em></p>
+<p>This paper works in the <strong>Refresh / Content Opportunity Scoring</strong> lane. It builds a scored queue over 30,000 pages, compares a fully transparent rule baseline (built in the earlier ML-07 assignment) against learned models, and reports the honest numbers — including where the models are wrong.</p>
+
+<h2>2. Data</h2>
+<p>We use the starter slice shipped with the internship repo: <code>data/raw/content_refresh_anonymized.csv</code>, <strong>30,000 rows &times; 44 columns</strong>. One row is one pseudonymized content page; metric columns are trailing 90-day aggregates (<code>*_90d</code>), last-30d/prev-30d pairs, and lifetime age/freshness fields. The declining proxy label is <code>trend_direction == 'down'</code> (54.2% of the slice).</p>
+<p><strong>Excluded, and why:</strong> <code>provider_used</code> and <code>model_used</code> (product/tooling flags, not page quality); <code>content_id</code> and <code>client_id</code> (pseudonymous ids — grouping keys only, never features); anything derived from the label. <strong>Public-safe:</strong> all ids are hashes; no client names, domains, URLs, titles, or queries exist in this data.</p>
+
+<h2>3. Methodology</h2>
+<p><strong>Features.</strong> 18 numeric features (including log impressions/clicks/sessions) plus 8 categoricals one-hot encoded: 52 model columns. The same list the reference pipeline uses.</p>
+<p><strong>Baseline.</strong> The ML-07 transparent rule: <code>0.40 &times; visibility + 0.30 &times; staleness + 0.20 &times; position opportunity + 0.10 &times; thin gap</code>, all percentile ranks, no fitted weights. Built to be explainable and beatable.</p>
+<p><strong>Models.</strong> Logistic regression, a depth-5 decision tree (min leaf 50), and a random forest (200 trees, depth 10, min leaf 25), all with balanced class weights and seed 42.</p>
+<p><strong>Validation.</strong> Client-holdout split: 20% of clients (6 of 32) held out entirely — 27,675 train / 2,325 test rows. Same split, same metrics for baseline and models. The queue metric is <strong>precision@K</strong> (K = 20/50/100); ROC AUC describes the full ranking. <strong>Leakage checks:</strong> no product flags, no ids, no future windows in features; the label is never an input. The top model features (impression history, position, age, word count) are all plausible — nothing suspiciously perfect.</p>
+
+<h2>4. Results</h2>
+<p>One table, same split, same metrics — plus the base rate (0.391 on the test slice):</p>
+<table>
+<tr><th>Model</th><th>Acc</th><th>Prec</th><th>Rec</th><th>F1</th><th>AUC</th><th>P@20</th><th>P@50</th><th>P@100</th></tr>
+<tr><td>Baseline rule</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>0.10</td><td>0.28</td><td>0.35</td></tr>
+<tr><td>Logistic regression</td><td>0.661</td><td>0.566</td><td>0.567</td><td>0.566</td><td>0.700</td><td>0.35</td><td>0.40</td><td>0.44</td></tr>
+<tr><td>Decision tree</td><td>0.677</td><td>0.569</td><td>0.716</td><td>0.634</td><td>0.742</td><td>0.40</td><td>0.50</td><td>0.59</td></tr>
+<tr class="winner"><td>Random forest</td><td>0.669</td><td>0.556</td><td>0.770</td><td>0.646</td><td>0.747</td><td>0.85</td><td>0.76</td><td>0.73</td></tr>
+</table>
+<figure>
+<img src="model_comparison.png" alt="Precision@K comparison of baseline and three models, plus top-12 feature importances">
+<figcaption>Left: precision@K on the client-holdout test set (base rate 0.39). Right: top-12 random-forest feature importances.</figcaption>
+</figure>
+<p><strong>Reading.</strong> The random forest wins everywhere that matters for a queue: precision@20 of 0.85 against a baseline of 0.10. The decision tree is the readable runner-up (P@100 0.59) and can be printed and read — a genuine option when explainability outranks the last few points. The baseline lost on purpose; that was its job. All precision@K numbers must be read next to the 0.39 base rate: 0.73 at P@100 is good, not magic.</p>
+
+<h2>5. Limitations &amp; Honest Framing</h2>
+<ul>
+<li>The label is a <strong>proxy</strong>, not ground truth. "Declining" does not prove a refresh would have fixed the page.</li>
+<li><strong>No causal claim.</strong> The model finds pages that look like past decliners; it does not prove refreshing causes recovery.</li>
+<li><strong>One slice, one window.</strong> 30,000 anonymized pages, 90-day aggregates. A different season or client mix could shift the numbers.</li>
+<li><strong>Error analysis.</strong> 769 of 2,325 test pages are misclassified at the 0.5 threshold. The model is most uncertain on thin pages with almost no impressions (too little signal to judge) and on climbing pages the proxy label ignores.</li>
+<li><strong>Decision-support only.</strong> The queue suggests where to look first; a human still reviews before spending refresh effort.</li>
+</ul>
+
+<h2>6. Ranked Recommendations</h2>
+<p>Scoring the full slice with the random forest and mapping the top pages to plain-words actions gives the playbook:</p>
+<div class="rec"><strong>1.</strong> Work the model queue top-down, not the traffic top-down — the highest-scoring pages are declining pages with real impressions left to recover.</div>
+<div class="rec"><strong>2.</strong> For queue pages with CTR &lt; 0.5 and position ≤ 20: rewrite the snippet/title first, then refresh the body.</div>
+<div class="rec"><strong>3.</strong> For thin queue pages (word count &lt; 1,200): expand the content before refreshing — thin refreshes recover less.</div>
+<div class="rec"><strong>4.</strong> For the rest: full refresh — update facts, examples, and publish date.</div>
+<div class="rec"><strong>5.</strong> Keep the depth-5 decision tree as the explainable fallback when a stakeholder asks "why is this page first?"</div>
+<div class="rec"><strong>6.</strong> Re-score monthly and re-validate on a fresh client holdout — drift in season or mix will move the numbers.</div>
+
+<h2>7. Reproducibility</h2>
+<p>Everything runs from the repo <code>iammns9/flyrank_ml_internship</code>: the executed notebook <code>work/notebooks/capstone.ipynb</code> (runs top to bottom, seed 42), <code>work/outputs/model_results.json</code>, and <code>work/outputs/ranked_recommendations.json</code>. Random seeds are fixed; tree-ensemble numbers can shift a few points across library versions (scikit-learn 1.9.1 used here), which is normal.</p>
+
+<footer>
+<strong>Acknowledgments &amp; data credit.</strong> Data and internship structure by <a href="https://flyrank.ai">FlyRank</a>. Analysis and writing by Muhammad Nasir. All data used is the anonymized starter slice; no client-identifying information appears anywhere in this work.
+</footer>
+
+</body>
+</html>

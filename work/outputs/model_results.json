@@ -1,0 +1,73 @@
+{
+  "random_state": 42,
+  "split": "client_holdout",
+  "n_train": 27675,
+  "n_test": 2325,
+  "generated_utc": "2026-10-04T17:40:30.496321Z",
+  "results": {
+    "baseline_rule": {
+      "accuracy": "\u2014",
+      "precision": "\u2014",
+      "recall": "\u2014",
+      "f1": "\u2014",
+      "roc_auc": "\u2014",
+      "p@20": 0.1,
+      "p@50": 0.28,
+      "p@100": 0.35,
+      "base_rate": 0.391
+    },
+    "logistic_regression": {
+      "accuracy": 0.6606,
+      "precision": 0.5659,
+      "recall": 0.5666,
+      "f1": 0.5662,
+      "roc_auc": 0.7003,
+      "avg_precision": 0.5215,
+      "p@20": 0.35,
+      "p@50": 0.4,
+      "p@100": 0.44,
+      "base_rate": 0.391
+    },
+    "decision_tree": {
+      "accuracy": 0.6766,
+      "precision": 0.5686,
+      "recall": 0.7162,
+      "f1": 0.6339,
+      "roc_auc": 0.7415,
+      "avg_precision": 0.5753,
+      "p@20": 0.4,
+      "p@50": 0.5,
+      "p@100": 0.59,
+      "base_rate": 0.391
+    },
+    "random_forest": {
+      "accuracy": 0.6692,
+      "precision": 0.5556,
+      "recall": 0.7701,
+      "f1": 0.6455,
+      "roc_auc": 0.7469,
+      "avg_precision": 0.615,
+      "p@20": 0.85,
+      "p@50": 0.76,
+      "p@100": 0.73,
+      "base_rate": 0.391
+    }
+  },
+  "top_features": {
+    "days_with_impressions": 0.1376,
+    "log_impressions_90d": 0.1281,
+    "avg_position": 0.1076,
+    "content_age_days": 0.0942,
+    "word_count": 0.039,
+    "log_clicks_90d": 0.0372,
+    "char_count": 0.0369,
+    "scroll_rate": 0.0342,
+    "ctr": 0.0337,
+    "age_tier_365+": 0.0335,
+    "days_with_sessions": 0.0312,
+    "log_sessions_90d": 0.028,
+    "days_since_last_update": 0.0249,
+    "position_tier_top_3": 0.0234,
+    "impression_tier_low": 0.018
+  }
+}
