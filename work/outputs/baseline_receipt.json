@@ -1,0 +1,23 @@
+{
+  "notebook": "w04_baseline_score.ipynb",
+  "n_rows": 30000,
+  "score_mean": 0.4426,
+  "score_max": 0.9323,
+  "reason_counts": {
+    "declining_with_demand": 13152,
+    "general_refresh_review": 10350,
+    "low_ctr_visible_page": 9759,
+    "page_one_decay_risk": 7076,
+    "thin_visible_page": 82,
+    "stale_visible_page": 17
+  },
+  "action_counts": {
+    "monitor": 10350,
+    "refresh": 9827,
+    "review_snippet_and_refresh": 9741,
+    "expand_and_refresh": 82
+  },
+  "precision_at_20_declining_proxy": 0.3,
+  "base_rate_declining": 0.5421,
+  "generated_utc": "2026-10-04T17:31:43.104647Z"
+}
